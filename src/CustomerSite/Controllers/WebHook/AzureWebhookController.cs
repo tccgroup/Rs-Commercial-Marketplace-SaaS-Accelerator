@@ -127,14 +127,18 @@ public class AzureWebhookController : ControllerBase
             
             if (appConfigValueConversion && appConfigValue)
             {
+                string authHeader = null;
                 try
                 {
                     await this.applicationLogService.AddApplicationLog("Validating the JWT token.").ConfigureAwait(false);
-                    var token = this.HttpContext.Request.Headers["Authorization"].ToString().Split(' ')[1];
+                    authHeader = this.HttpContext.Request.Headers["Authorization"].ToString();
+                    var token = authHeader.Split(' ')[1];
                     await validateJwtToken.ValidateTokenAsync(token);
                 }
                 catch (Exception e)
                 {
+
+                    await this.applicationLogService.AddApplicationLog($"Obtained header 'Authorization': {authHeader}").ConfigureAwait(false);
                     await this.applicationLogService.AddApplicationLog($"Jwt token validation failed with error: {e.Message}").ConfigureAwait(false);
 
                     return new UnauthorizedResult();
