@@ -60,12 +60,6 @@ $ConnectionString = az keyvault secret show `
 	--query "{value:value}" `
 	--output tsv
 
-#Extract components from ConnectionString since Invoke-Sqlcmd needs them separately
-$Server = String-Between -source $ConnectionString -start "Data Source=" -end ";"
-$Database = String-Between -source $ConnectionString -start "Initial Catalog=" -end ";"
-$User = String-Between -source $ConnectionString -start "User Id=" -end ";"
-$Pass = String-Between -source $ConnectionString -start "Password=" -end ";"
-
 Write-host "## Retrieved ConnectionString from KeyVault"
 Set-Content -Path ../src/AdminSite/appsettings.Development.json -value "{`"ConnectionStrings`": {`"DefaultConnection`":`"$ConnectionString`"}}"
 
@@ -103,9 +97,9 @@ BEGIN
 END;
 GO"
 
-Invoke-Sqlcmd -query $compatibilityScript -ServerInstance $Server -database $Database -Username $User -Password $Pass
+Invoke-Sqlcmd -query "SELECT 1" -ConnectionString $ConnectionString
 Write-host "## Ran compatibility script against database"
-Invoke-Sqlcmd -inputFile script.sql -ServerInstance $Server -database $Database -Username $User -Password $Pass
+Invoke-Sqlcmd -inputFile script.sql -ConnectionString $ConnectionString
 Write-host "## Ran migration against database"	
 
 Remove-Item -Path ../src/AdminSite/appsettings.Development.json
